@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dir=~/dotfiles                    # dotfiles directory
-files=".gitignore_global .gitconfig .githelpers .git-completion.bash .git-prompt.sh"    # list of files/folders to symlink in homedir
+files=".gitignore_global .gitconfig .githelpers .git-completion.bash .git-prompt.sh .bashrc .bash_aliases .inputrc .vimrc"    # list of files/folders to symlink in homedir
 
 echo "Changing to the $dir directory"
 cd $dir
