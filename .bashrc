@@ -117,3 +117,21 @@ if ! shopt -oq posix; then
         . /etc/bash_completion
     fi
 fi
+
+# heroku autocomplete setup
+HEROKU_AC_BASH_SETUP_PATH=/home/tyler/.cache/heroku/autocomplete/bash_setup && test -f $HEROKU_AC_BASH_SETUP_PATH && source $HEROKU_AC_BASH_SETUP_PATH;
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/tyler/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/tyler/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/tyler/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/tyler/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+monitor-config laptop
+sleep 5
+monitor-config work

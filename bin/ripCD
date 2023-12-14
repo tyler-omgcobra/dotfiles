@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for i in `seq 3 4`; do
+  echo Transcoding $i
+
+  vlc -I dummy cdda:///dev/sr0 --cdda-track=$i --sout "#transcode{vcodec=none,acodec=flac}:std{access=file,mux=raw,dst=/home/tyler/Music/track$i.flac}" vlc://quit
+done

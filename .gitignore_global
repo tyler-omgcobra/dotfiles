@@ -1,12 +1,12 @@
 # OS generated files #
 ######################
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+#.DS_Store
+#.DS_Store?
+#._*
+#.Spotlight-V100
+#.Trashes
+#ehthumbs.db
+#Thumbs.db
 .cap_tasks~
 .cap_tasks
 .rake_tasks
@@ -15,6 +15,18 @@ Gemfile.local
 Gemfile.local.lock
 
 .vscode/
+
+.idea/
+venv/
+**/*.iml
+.*/
+
+**/gen/**
+**/*.tokens
+**/github.com/**
+**/golang.org/**
+**/gopkg.in/**
+**/__pycache__
 
 # Tags:
 .tags_swap

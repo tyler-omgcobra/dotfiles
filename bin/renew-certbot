@@ -1,0 +1,16 @@
+#!/bin/sh
+
+temp_dir=~/temp
+certbot_dir=$temp_dir/certbot
+www_dir=$certbot_dir/www/.well-known/acme-challenge
+plugins_dir=$certbot_dir/www/plugins/.well-known/acme-challenge
+
+mkdir -p $certbot_dir
+sshfs cpanel: $certbot_dir
+mkdir -p $www_dir $plugins_dir
+echo $www_dir
+echo $plugins_dir
+sudo certbot certonly --manual -d omgcobra.org,www.omgcobra.org,plugins.omgcobra.org
+sudo umount $certbot_dir
+rmdir $certbot_dir
+rmdir $temp_dir

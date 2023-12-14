@@ -1,7 +1,7 @@
 [user]
   name = Tyler Smith
   email = tyler@omgcobra.org
-  username = tyler-omgcobra
+  username = tyler
 
 [color]
   branch = auto
@@ -29,6 +29,7 @@
   editor = vim
   filemode = false
   excludesfile = ~/.gitignore_global
+	autocrlf = input
 
 [alias]
   st = status
@@ -52,7 +53,8 @@
   cherry-drop    =  "!. ~/.githelpers && cherry_drop"
   whatsgoinon    = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
   obeyyourmaster = "!git fetch; git reset --hard origin/master"
-  keepup         = "!git fetch; git rebase origin/master -S"
+  obeyyourmain = "!git fetch; git reset --hard origin/main"
+  keepup         = "!git fetch; git rebase origin/main -S"
   lastsha        = "!git rev-parse --short HEAD | tr -d '\n' | pbcopy"
   goodmorning    = "!. ~/.githelpers && goodmorning"
   whatsmerged    = "!git branch --merged | grep -v master | grep -v dev | grep -v staging-qa"
@@ -71,11 +73,19 @@
   insteadOf = https://github.com/
 
 [filter "lfs"]
-  clean = git-lfs clean %f
-  smudge = git-lfs smudge %f
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
   required = true
+	process = git-lfs filter-process
 
 [pager]
 	branch = false
 [diff]
 	colorMoved = zebra
+  tool = intellij
+[difftool "intellij"]
+  cmd = idea diff $(cd $(dirname "$LOCAL") && pwd)/$(basename "$LOCAL") $(cd $(dirname "$REMOTE") && pwd)/$(basename "$REMOTE")
+  prompt = false
+
+[init]
+	templateDir = /home/tyler/.config/git/template

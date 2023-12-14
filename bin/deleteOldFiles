@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DIR=$1
+AGE=$2
+
+if [ -z "$DIR" ]; then
+  DIR=.
+fi
+
+if [ -z "$AGE" ]; then
+  AGE=30
+fi
+
+du -sh $DIR
+find $DIR -type f -mtime +$AGE -delete
+du -sh $DIR

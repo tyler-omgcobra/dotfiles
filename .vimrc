@@ -1,6 +1,7 @@
-set ts=4
-set sts=4
-set sw=4
+set ts=2
+set sts=2
+set sw=2
 set et
 set ai
 set number
+set visualbell

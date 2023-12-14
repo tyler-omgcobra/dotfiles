@@ -1,0 +1,228 @@
+#!/bin/bash
+
+declare -A outputs
+declare -A connections
+
+while read -r output name conn; do
+    outputs["$name"]="$output"
+    connections["$name"]="$conn"
+done < <(DISPLAY=$DISPLAY xrandr --prop | awk '
+    function dehex(str) {
+        cmd = "echo " str " | xxd -r -p -"
+        cmd | getline result
+        return result ""
+    }
+    /^[^ \t]/ {
+        output=$1
+        conn=$2
+        hex=""
+        if (conn == "disconnected") {
+            print output, output, conn
+        }
+    }
+    /[:.]/ && h {
+        if (hex ~ /000000fc00/) {
+            sub(/.*000000fc00/, "", hex)
+            hex = substr(hex, 0, 26) "0a"
+            sub(/0a.*/, "", hex)
+            name = dehex(hex)
+        } else {
+            name = "laptop"
+        }
+        sub(/ /, "_", name)
+        print output, name, conn
+        h=0
+    }
+    h {
+        sub(/[ \t]+/, "")
+        hex = hex $0
+    }
+    /EDID.*:/ {h=1}
+')
+
+function notify {
+    notify-send "Monitors set to $*"
+}
+
+function disable {
+    action="$1"
+    shift
+    cmd=""
+    for key in "${!connections[@]}"; do
+        output="${outputs[$key]}"
+        case $action in
+            disconnected)
+                [ "${connections[$key]}" == "disconnected" ] || continue
+                ;;
+            exclude)
+                elementIn $output $@ && continue
+                ;;
+            include)
+                elementIn $output $@ || continue
+                ;;
+        esac
+        cmd+=" --output $output --off"
+    done
+    do_xrandr $cmd
+}
+
+function elementIn {
+    local e match="$1"
+    shift
+    for e; do [[ "$e" == "$match" ]] && return 0; done
+    return 1
+}
+
+function isEnabled {
+    do_xrandr --listmonitors | grep -q " $1$"
+    return $?
+}
+
+function do_xrandr {
+    [ -z "$1" ] || DISPLAY=$DISPLAY xrandr $*
+}
+
+function set_monitors {
+    local screens xrandr_cmd prev i3 current i=1
+    for screen in $*; do
+      case $screen in
+          primary)
+            if [ ! -z "$current" ]; then
+                current+=" --primary"
+            fi
+            ;;
+          left|right|normal|inverted)
+            if [ ! -z "$current" ]; then
+                current+=" --rotate $screen"
+            fi
+            ;;
+          *[!0-9]*)
+            xrandr_cmd+=$current
+            current=
+            output=${!screen}
+            if [ -z "$output" ]; then
+              output=${outputs["$screen"]}
+            fi
+            if [ -z "$output" ]; then
+              echo "$screen not connected"
+              continue
+            fi
+            screens+=" $output"
+            current+=" --output $output"
+            if [ "$screen" = "samsung" ]; then
+              current+=" --mode 1920x1080"
+            else
+              current+=" --auto"
+            fi
+            if [ ! -z "$prev" ]; then
+              current+=" --right-of $prev"
+            fi
+            i3="$i3
+                workspace number $i
+                move workspace to output $output"
+            let i+=1
+            prev="$output"
+            ;;
+          *)
+            i=$screen
+            xrandr_cmd+=$current
+            current=
+            ;;
+      esac
+    done
+    xrandr_cmd+=$current
+    disable exclude $screens
+    do_xrandr $xrandr_cmd
+    ~/.fehbg
+    i3-msg -q "$i3"
+    sink=`pactl list sinks short | grep -E 'tunnel.*\.pci' | awk '{ print $2 }'`
+    if [ -z "$sink" ]; then
+      sink=`pactl list sinks short | grep -E 'DisplayLink' | awk '{ print $2 }'`
+    fi
+    if [ -z "$sink" ]; then
+      sink=`pactl list sinks short | head -n 1 | awk '{ print $2 }'`
+    fi
+    pactl set-default-sink $sink
+}
+
+laptop=${outputs["laptop"]}
+samsung=${outputs["S22E310"]}
+asus=${outputs["ASUS_VS247"]}
+newasus=${outputs["VY249"]}
+acer=${outputs["Acer_P201W"]}
+portable=${outputs["X_EQUIP"]}
+oldportable=${outputs["MB169B+_"]}
+
+arg=$1
+shift
+case $arg in
+    adhoc)
+        set_monitors $*
+        notify $*
+        ;;
+    docked)
+        set_monitors 3 newasus 1 asus primary 2 samsung 4 laptop
+        notify docked
+        ;;
+    laptop)
+        set_monitors laptop primary
+        notify laptop
+        ;;
+    samsung)
+        set_monitors 1 samsung primary
+        notify samsung
+        ;;
+    dnd)
+        set_monitors 2 portable left 1 laptop primary
+        notify dnd
+        ;;
+    couch)
+        set_monitors 2 portable normal 1 laptop primary
+        notify couch
+        ;;
+    work)
+        set_monitors 1 samsung primary 2 laptop
+        notify work
+        ;;
+    lid-close)
+        if isEnabled $samsung || isEnabled $asus || isEnabled $newasus || isEnabled $portable; then
+          disable include $laptop
+          notify lid closed
+        fi
+        ;;
+    lid-open)
+        if ! isEnabled $laptop; then
+            cmd="--output $laptop --auto"
+            if isEnabled $samsung; then
+                cmd+=" --right-of $samsung"
+            elif isEnabled $asus; then
+                cmd+=" --right-of $asus"
+            elif isEnabled $newasus; then
+                cmd+=" --right-of $newasus"
+            elif isEnabled $portable; then
+                cmd+=" --right-of $portable"
+            fi
+            do_xrandr $cmd
+            notify lid opened
+        fi
+        ;;
+    shortlist)
+        echo adhoc docked laptop samsung dnd couch work lid-close lid-open list display
+        ;;
+    list)
+        for key in "${!outputs[@]}"; do
+            echo "$key: ${outputs[$key]} (${connections[$key]})"
+        done
+        ;;
+    display)
+        echo "DISPLAY=$DISPLAY"
+        ;;
+    *)
+        if [ -z "$arg" ]; then
+            echo At least one argument is required
+        else
+            set_monitors $arg $*
+            notify $arg $*
+        fi
+        ;;
+esac

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+device="Elan Touchpad"
+
+function set_status {
+    case "$1" in
+        "0")
+            fn=disable
+            ;;
+        "1")
+            fn=enable
+            ;;
+    esac
+    xinput --$fn "$device"
+    notify-send "Touchpad ${fn}d"
+}
+
+case "$1" in
+    "on")
+        desired_state=1
+        ;;
+    "off")
+        desired_state=0
+        ;;
+    "")
+        state=`xinput list-props "$device" | grep "Device Enabled" | grep -o "[01]$"`
+        let desired_state=1-$state
+        ;;
+    *)
+        echo "Unknown args: $@"
+        exit 1
+esac
+
+set_status $desired_state
